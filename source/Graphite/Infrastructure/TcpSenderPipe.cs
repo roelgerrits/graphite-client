@@ -1,36 +1,38 @@
-﻿using System;
+﻿using Graphite.Infrastructure.TcpConnectivity;
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Graphite.Infrastructure
 {
-    internal class TcpSenderPipe : IPipe, IDisposable
+    public class TcpSenderPipe : IPipe, IDisposable
     {
-        private readonly IPEndPoint endpoint;
+        //private readonly IPEndPoint endpoint;
 
-        private TcpClient tcpClient;
+        private ITcpClientWrapper tcpClientWrapper;
 
         private bool disposed;
 
         private readonly BlockingCollection<string> messageList = new BlockingCollection<string>();
 
-        private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
+        public CancellationTokenSource TokenSource { get; }
 
-        public TcpSenderPipe(IPAddress address, int port)
+        public TcpSenderPipe(ITcpClientWrapper tcpClientWrapper)
         {
-            this.endpoint = new IPEndPoint(address, port);
-
-            this.RenewClient();
+            TokenSource = new CancellationTokenSource();
+            this.tcpClientWrapper = tcpClientWrapper;
+        }
+        public TcpSenderPipe(TcpClientProperties tcpClientProperties) : this(new TcpClientWrapper(tcpClientProperties))
+        {
         }
 
-        public void Run()
+        public Task Run()
         {
             var task = Task.Factory.StartNew(this.ProcessMessages, TaskCreationOptions.LongRunning);
 
@@ -47,6 +49,7 @@ namespace Graphite.Infrastructure
                     }
                 },
                 TaskContinuationOptions.OnlyOnFaulted);
+            return task;
         }
 
         public bool Send(string message)
@@ -62,7 +65,7 @@ namespace Graphite.Infrastructure
             if (messages == null)
                 return false;
 
-            this.messageList.Add(string.Join("\n", messages), this.tokenSource.Token);
+            this.messageList.Add(string.Join("\n", messages), this.TokenSource.Token);
 
             return true;
         }
@@ -80,11 +83,11 @@ namespace Graphite.Infrastructure
             {
                 try
                 {
-                    this.tokenSource.Cancel();
+                    this.TokenSource.Cancel();
 
-                    if (this.tcpClient != null)
+                    if (this.tcpClientWrapper != null)
                     {
-                        this.tcpClient.Close();
+                        this.tcpClientWrapper.Close();
                     }
                 }
                 catch
@@ -95,51 +98,57 @@ namespace Graphite.Infrastructure
             }
         }
 
+
         private void ProcessMessages()
         {
             do
             {
-                string message = this.messageList.Take(this.tokenSource.Token);
+                try
+                {
+                    string message = this.messageList.Take(this.TokenSource.Token);
+                    var data = Encoding.Default.GetBytes(message + "\n");
 
-                var data = Encoding.Default.GetBytes(message + "\n");
+                    CoreSend(data);
+                }
+                catch (Exception ex)
+                {
+                    // Exception filtering
+                    if (ex.GetType().Name != "InvalidOperationException" && ex.GetType().Name != "SocketException")
+                    {
+                        throw;
+                    }
 
-                this.CoreSend(data);
+                    // When not recovering from the tcpclient failure, throw exception
+                    if (!tcpClientWrapper.ReInitialize())
+                    {
+                        throw;
+                    }
+                }
             }
-            while (!this.tokenSource.Token.IsCancellationRequested);
+            while (!TokenSource.Token.IsCancellationRequested);
+        }
+
+        private void HandleProcessMessageException(Exception ex, ref int retry)
+        {
+            
         }
 
         private void EnsureConnected()
         {
-            if (this.tcpClient.Connected)
+            if (tcpClientWrapper.Connected)
                 return;
 
-            try
-            {
-                this.tcpClient.Connect(this.endpoint);
-            }
-            catch (ObjectDisposedException)
-            {
-                this.RenewClient();
-                this.tcpClient.Connect(this.endpoint);
-            }
-        }
-
-        private void RenewClient()
-        {
-            this.tcpClient = new TcpClient();
-            this.tcpClient.ExclusiveAddressUse = false;
+            tcpClientWrapper.Connect();
         }
 
         private bool CoreSend(byte[] data)
         {
-            this.EnsureConnected();
+            EnsureConnected();
 
             try
             {
-                this.tcpClient
-                    .GetStream()
-                    .Write(data, 0, data.Length);
-
+                tcpClientWrapper.Write(data, 0, data.Length);
+                    
                 return true;
             }
             catch (IOException exception)

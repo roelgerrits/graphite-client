@@ -37,6 +37,8 @@ namespace MSBuild.Graphite.Tasks
 
         public string PrefixKey { get; set; }
 
+        public int MaxRetries { get; set; }
+
         [Required]
         public string Key { get; set; }
 

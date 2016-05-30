@@ -24,6 +24,14 @@ namespace Graphite.Configuration
         public string PrefixKey { get; private set; }
 
         /// <summary>
+        /// Gets or sets the maximum number of retries
+        /// -1 for infinite
+        /// 0 for no retries
+        /// > 0 for x number of retries.
+        /// </summary>        
+        public int MaxRetries { get; private set; }
+
+        /// <summary>
         /// Parses connection string to properties.
         /// </summary>
         /// <param name="connectionString"></param>

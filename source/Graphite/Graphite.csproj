@@ -114,6 +114,10 @@
     <Compile Include="Infrastructure\IMonitoringChannel.cs" />
     <Compile Include="Infrastructure\ISamplingPipe.cs" />
     <Compile Include="IMetricsPipeProvider.cs" />
+    <Compile Include="Infrastructure\TcpConnectivity\CountBasedRetry.cs" />
+    <Compile Include="Infrastructure\TcpConnectivity\ITcpClient.cs" />
+    <Compile Include="Infrastructure\TcpConnectivity\TcpClientProperties.cs" />
+    <Compile Include="Infrastructure\TcpConnectivity\TcpClientWrapper.cs" />
     <Compile Include="Infrastructure\TcpSenderPipe.cs" />
     <Compile Include="IStopwatch.cs" />
     <Compile Include="Infrastructure\SamplingMonitoringChannel.cs" />

@@ -26,5 +26,13 @@ namespace Graphite.Configuration
         /// Gets the common prefix key.
         /// </summary>        
         string PrefixKey { get; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of retries
+        /// -1 for infinite
+        /// 0 for no retries
+        /// > 0 for x number of retries.
+        /// </summary>        
+        int MaxRetries { get; }
     }
 }

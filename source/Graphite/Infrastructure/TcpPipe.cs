@@ -1,3 +1,4 @@
+using Graphite.Infrastructure.TcpConnectivity;
 using System;
 using System.Net;
 
@@ -9,10 +10,10 @@ namespace Graphite.Infrastructure
 
         private bool disposed;
 
-        public TcpPipe(IPAddress address, int port)
+        public TcpPipe(TcpClientProperties tcpClientProperties)
         {
-            this.sender = new TcpSenderPipe(address, port);
-            this.sender.Run();
+            sender = new TcpSenderPipe(tcpClientProperties);
+            sender.Run();
         }
 
         public bool Send(string message)

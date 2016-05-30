@@ -3,6 +3,7 @@ using System.Net;
 using Graphite.Configuration;
 using Graphite.Formatters;
 using Graphite.Infrastructure;
+using Graphite.Infrastructure.TcpConnectivity;
 
 namespace Graphite
 {
@@ -173,8 +174,9 @@ namespace Graphite
 
             if (configuration.Transport == TransportType.Tcp)
             {
-                // Initialize with ip address.
-                this.graphitePipe = new TcpPipe(address, configuration.Port);
+                // Initialize with tcp client properties.
+                var tcpClientProperties = new TcpClientProperties(address, configuration.Port, configuration.MaxRetries);
+                graphitePipe = new TcpPipe(tcpClientProperties);
             }
             else if (configuration.Transport == TransportType.Udp)
             {

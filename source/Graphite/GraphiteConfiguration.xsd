@@ -16,6 +16,7 @@
     <xs:attribute name="port" use="required" type="xs:integer"></xs:attribute>
     <xs:attribute name="transport" use="optional" type="tns:Graphite.Configuration.TransportType"></xs:attribute>
     <xs:attribute name="prefixKey" use="optional" type="xs:string"></xs:attribute>
+    <xs:attribute name="maxretries" use="optional" type="xs:integer"></xs:attribute>
   </xs:complexType>
   <xs:complexType name="Graphite.Configuration.StatsDElement">
     <xs:attribute name="address" use="required" type="xs:string"></xs:attribute>

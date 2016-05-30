@@ -29,6 +29,11 @@ namespace Graphite.Configuration
         internal const string PrefixKeyPropertyName = "prefixKey";
 
         /// <summary>
+        /// The XML name of the <see cref="MaxRetries"/> property.
+        /// </summary>    
+        internal const string MaxRetriesPropertyName = "maxretries";
+
+        /// <summary>
         /// Gets or sets the port number.
         /// </summary>        
         [ConfigurationPropertyAttribute(PortPropertyName, IsRequired = true)]
@@ -66,6 +71,19 @@ namespace Graphite.Configuration
         {
             get { return (string)base[PrefixKeyPropertyName]; }
             set { base[PrefixKeyPropertyName] = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum number of retries
+        /// -1 for infinite
+        /// 0 for no retries
+        /// > 0 for x number of retries.
+        /// </summary>        
+        [ConfigurationProperty(MaxRetriesPropertyName, IsRequired = false)]
+        public int MaxRetries
+        {
+            get { return (int)base[MaxRetriesPropertyName]; }
+            set { base[MaxRetriesPropertyName] = value; }
         }
     }
 }
